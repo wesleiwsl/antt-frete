@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Frete ANTT</title>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --yellow: #d29922;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    nav { margin-left: auto; display: flex; gap: 1rem; font-size: 0.85rem; }
+    nav a { color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 6px; }
+    nav a:hover, nav a.active { background: var(--accent); color: #fff; }
+
+    main {
+      max-width: 800px; margin: 2rem auto; padding: 0 1.5rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+    }
+    @media (max-width: 640px) { main { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); }
+    .card.full { grid-column: 1 / -1; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 4px; }
+    select, input[type="number"] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--accent); }
+
+    button {
+      width: 100%; background: var(--accent); border: none; border-radius: 6px;
+      color: #fff; padding: 0.65rem; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; margin-top: 0.5rem; transition: opacity .15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .result-item { background: var(--bg); border-radius: 8px; padding: 1rem; }
+    .result-item .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+    .result-item .value { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .result-item.highlight .value { color: var(--green); font-size: 1.6rem; }
+    .result-item.full-w { grid-column: 1 / -1; }
+
+    .breakdown {
+      margin-top: 1rem; background: var(--bg); border-radius: 8px;
+      padding: 1rem; font-size: 0.85rem;
+    }
+    .breakdown h3 { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .breakdown-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .breakdown-row:last-child { border: none; font-weight: 700; color: var(--green); }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; }
+    .alert-warn { background: rgba(210,153,34,0.15); border: 1px solid var(--yellow); color: var(--yellow); }
+    .alert-err  { background: rgba(248,81,73,0.15); border: 1px solid #f85149; color: #f85149; }
+
+    #resultado { display: none; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🧮 Calculadora de Frete ANTT</h1>
+    <p>Cálculo baseado no piso mínimo vigente — Lei 13.703/2018</p>
+  </div>
+  <nav>
+    <a href="index.html">Tabela</a>
+    <a href="calculadora.html" class="active">Calculadora</a>
+    <a href="historico.html">Histórico</a>
+  </nav>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Parâmetros do Frete</h2>
+
+    <div class="form-group">
+      <label>Tipo de Veículo</label>
+      <select id="sel-veiculo">
+        <option value="">Carregando…</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Tipo de Carga</label>
+      <select id="sel-carga">
+        <option value="">Carregando…</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Distância (km)</label>
+      <input type="number" id="inp-km" min="1" step="1" placeholder="Ex: 500" />
+    </div>
+
+    <div class="form-group">
+      <label>Pedágio (R$)</label>
+      <input type="number" id="inp-pedagio" min="0" step="0.01" placeholder="Ex: 120.50" value="0" />
+    </div>
+
+    <button id="btn-calcular" onclick="calcular()">Calcular Frete Mínimo</button>
+  </div>
+
+  <div class="card" id="resultado">
+    <h2>Resultado</h2>
+    <div class="result-grid">
+      <div class="result-item highlight full-w">
+        <div class="label">Frete Mínimo Total</div>
+        <div class="value" id="res-total">—</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Frete Base</div>
+        <div class="value" id="res-base">—</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Pedágio</div>
+        <div class="value" id="res-pedagio">—</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Valor por km</div>
+        <div class="value" id="res-km">—</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Mínimo Garantido</div>
+        <div class="value" id="res-min">—</div>
+      </div>
+    </div>
+
+    <div class="breakdown">
+      <h3>Composição do Cálculo</h3>
+      <div class="breakdown-row"><span>R$/km × distância</span><span id="bk-fretekm">—</span></div>
+      <div class="breakdown-row"><span>Aplicado mínimo?</span><span id="bk-minimo">—</span></div>
+      <div class="breakdown-row"><span>+ Pedágio</span><span id="bk-pedagio">—</span></div>
+      <div class="breakdown-row"><span><b>= Total mínimo</b></span><span id="bk-total">—</span></div>
+    </div>
+
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem" id="res-vigencia"></p>
+  </div>
+
+  <div class="card full" id="card-alerta" style="display:none">
+    <div class="alert alert-warn">
+      ⚠️ <strong>Atenção:</strong> O piso mínimo é obrigatório por lei. Cobrar abaixo deste valor
+      pode resultar em penalidades para o contratante e é considerado infração.
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = "http://192.168.1.120:8002";
+  const brl = (v) => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  async function loadSelects() {
+    const [vRes, cRes] = await Promise.all([
+      fetch(`${API}/veiculos`).then(r => r.json()),
+      fetch(`${API}/cargas`).then(r => r.json()),
+    ]);
+
+    const selV = document.getElementById("sel-veiculo");
+    selV.innerHTML = vRes.map(v =>
+      `<option value="${v.tipo_veiculo}">${v.tipo_veiculo} (${v.eixos} eixos)</option>`
+    ).join("");
+
+    const selC = document.getElementById("sel-carga");
+    selC.innerHTML = cRes.map(c =>
+      `<option value="${c.tipo_carga}">${c.tipo_carga}</option>`
+    ).join("");
+  }
+
+  async function calcular() {
+    const veiculo = document.getElementById("sel-veiculo").value;
+    const carga   = document.getElementById("sel-carga").value;
+    const km      = parseFloat(document.getElementById("inp-km").value);
+    const pedagio = parseFloat(document.getElementById("inp-pedagio").value) || 0;
+
+    if (!veiculo || !carga || !km || km <= 0) {
+      alert("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-calcular");
+    btn.disabled = true;
+    btn.textContent = "Calculando…";
+
+    try {
+      const params = new URLSearchParams({
+        tipo_veiculo: veiculo, tipo_carga: carga,
+        distancia_km: km, pedagio,
+      });
+      const resp = await fetch(`${API}/calcular?${params}`);
+      if (!resp.ok) throw new Error((await resp.json()).detail);
+      const d = await resp.json();
+
+      document.getElementById("res-total").textContent   = brl(d.frete_total);
+      document.getElementById("res-base").textContent    = brl(d.frete_base);
+      document.getElementById("res-pedagio").textContent = brl(d.pedagio);
+      document.getElementById("res-km").textContent      = "R$ " + Number(d.valor_km).toFixed(4) + "/km";
+      document.getElementById("res-min").textContent     = brl(d.valor_minimo);
+
+      const minimoAplicado = d.frete_por_km < d.valor_minimo;
+      document.getElementById("bk-fretekm").textContent  = brl(d.frete_por_km);
+      document.getElementById("bk-minimo").textContent   = minimoAplicado ? "✅ Sim (mínimo garantido)" : "Não";
+      document.getElementById("bk-pedagio").textContent  = brl(d.pedagio);
+      document.getElementById("bk-total").textContent    = brl(d.frete_total);
+      document.getElementById("res-vigencia").textContent = `Tabela vigente desde: ${d.vigente_desde}`;
+
+      document.getElementById("resultado").style.display    = "block";
+      document.getElementById("card-alerta").style.display  = "block";
+    } catch(e) {
+      alert("Erro: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Calcular Frete Mínimo";
+    }
+  }
+
+  loadSelects();
+</script>
+</body>
+</html>

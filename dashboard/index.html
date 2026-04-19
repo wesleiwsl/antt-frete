@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANTT — Piso Mínimo de Frete</title>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    nav { margin-left: auto; display: flex; gap: 1rem; font-size: 0.85rem; }
+    nav a { color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 6px; }
+    nav a:hover, nav a.active { background: var(--accent); color: #fff; }
+
+    main { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 1rem; color: var(--accent); }
+
+    .badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .badge {
+      padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
+      transition: all .15s;
+    }
+    .badge.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead th {
+      background: var(--bg); color: var(--muted); padding: 8px 12px;
+      text-align: left; font-weight: 600; border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: rgba(88,166,255,0.05); }
+    tbody td { padding: 10px 12px; }
+    tbody td:nth-child(3), tbody td:nth-child(4) { color: var(--green); font-weight: 600; }
+
+    .vigencia { font-size: 0.78rem; color: var(--muted); margin-top: 0.75rem; }
+    .tag-eixo {
+      display: inline-block; background: rgba(88,166,255,0.15);
+      color: var(--accent); border-radius: 4px; padding: 1px 6px; font-size: 0.75rem;
+    }
+
+    #status { font-size: 0.8rem; color: var(--muted); margin-top: 1rem; }
+    .loader { color: var(--muted); font-style: italic; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🚛 ANTT — Piso Mínimo de Frete</h1>
+    <p>Tabela oficial de valores mínimos por km — Lei 13.703/2018</p>
+  </div>
+  <nav>
+    <a href="index.html" class="active">Tabela</a>
+    <a href="calculadora.html">Calculadora</a>
+    <a href="historico.html">Histórico</a>
+  </nav>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Filtrar por tipo de carga</h2>
+    <div class="badges" id="badges-carga">
+      <span class="badge active" data-carga="">Todas</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Veículo</th>
+          <th>Eixos</th>
+          <th>Tipo de Carga</th>
+          <th>R$/km</th>
+          <th>Mínimo (R$)</th>
+          <th>Vigência</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-body">
+        <tr><td colspan="6" class="loader" style="padding:1rem">Carregando…</td></tr>
+      </tbody>
+    </table>
+    <p class="vigencia" id="vigencia-text"></p>
+    <p id="status"></p>
+  </div>
+</main>
+
+<script>
+  const API = "http://192.168.1.120:8002";
+  let allRows = [];
+
+  const fmt  = (v) => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:4}) : "—";
+  const fmtD = (v) => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2}) : "—";
+
+  async function loadTabela(carga = "") {
+    const params = new URLSearchParams();
+    if (carga) params.set("tipo_carga", carga);
+    try {
+      const resp = await fetch(`${API}/tabela?${params}`);
+      allRows = await resp.json();
+      renderTabela(allRows);
+    } catch(e) {
+      document.getElementById("tabela-body").innerHTML =
+        `<tr><td colspan="6" style="color:#f85149;padding:1rem">Erro ao conectar à API: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadCargas() {
+    const resp  = await fetch(`${API}/cargas`);
+    const cargas = await resp.json();
+    const cont  = document.getElementById("badges-carga");
+    cargas.forEach(c => {
+      const b = document.createElement("span");
+      b.className = "badge";
+      b.dataset.carga = c.tipo_carga;
+      b.textContent = c.tipo_carga;
+      b.onclick = () => selectCarga(b);
+      cont.appendChild(b);
+    });
+  }
+
+  function selectCarga(el) {
+    document.querySelectorAll(".badge").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    loadTabela(el.dataset.carga);
+  }
+
+  document.querySelector(".badge").onclick = (e) => selectCarga(e.target);
+
+  function renderTabela(rows) {
+    const tbody = document.getElementById("tabela-body");
+    if (!rows.length) { tbody.innerHTML = "<tr><td colspan='6'>Nenhum resultado.</td></tr>"; return; }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.tipo_veiculo}</td>
+        <td><span class="tag-eixo">${r.eixos} eixos</span></td>
+        <td>${r.tipo_carga}</td>
+        <td>${fmt(r.valor_km)}</td>
+        <td>${fmtD(r.valor_minimo)}</td>
+        <td>${r.vigente_desde}</td>
+      </tr>`).join("");
+
+    const datas = [...new Set(rows.map(r => r.vigente_desde))];
+    document.getElementById("vigencia-text").textContent =
+      `Vigência: ${datas.join(", ")} — Fonte: ANTT / gov.br`;
+  }
+
+  loadCargas();
+  loadTabela();
+</script>
+</body>
+</html>

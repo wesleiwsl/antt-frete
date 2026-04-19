@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico de Preços — ANTT Frete</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    nav { margin-left: auto; display: flex; gap: 1rem; font-size: 0.85rem; }
+    nav a { color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 6px; }
+    nav a:hover, nav a.active { background: var(--accent); color: #fff; }
+
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .controls {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem 1.5rem;
+      display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 1.5rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; color: var(--muted); }
+    select {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); padding: 0.45rem 0.75rem; font-size: 0.88rem;
+    }
+    button {
+      background: var(--accent); border: none; border-radius: 6px;
+      color: #fff; padding: 0.48rem 1.2rem; font-size: 0.88rem;
+      font-weight: 600; cursor: pointer;
+    }
+    button:hover { opacity: 0.85; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 1rem; color: var(--accent); margin-bottom: 1.25rem; }
+
+    .chart-wrap { position: relative; height: 360px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 1rem; }
+    thead th {
+      background: var(--bg); color: var(--muted); padding: 8px 12px;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: rgba(88,166,255,0.05); }
+    tbody td { padding: 8px 12px; }
+    .up   { color: #f85149; }
+    .down { color: var(--green); }
+    .same { color: var(--muted); }
+
+    .empty { color: var(--muted); font-style: italic; padding: 1rem 0; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📈 Histórico de Preços — ANTT</h1>
+    <p>Evolução do piso mínimo de frete desde a implementação</p>
+  </div>
+  <nav>
+    <a href="index.html">Tabela</a>
+    <a href="calculadora.html">Calculadora</a>
+    <a href="historico.html" class="active">Histórico</a>
+  </nav>
+</header>
+
+<main>
+  <div class="controls">
+    <div class="form-group">
+      <label>Tipo de Veículo</label>
+      <select id="sel-veiculo"></select>
+    </div>
+    <div class="form-group">
+      <label>Tipo de Carga</label>
+      <select id="sel-carga"></select>
+    </div>
+    <button onclick="loadHistorico()">Ver Evolução</button>
+  </div>
+
+  <div class="card">
+    <h2 id="chart-title">Selecione veículo e carga para visualizar</h2>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tabela de Variações</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Vigência</th>
+          <th>R$/km</th>
+          <th>Variação</th>
+          <th>Mínimo (R$)</th>
+          <th>Fonte</th>
+        </tr>
+      </thead>
+      <tbody id="hist-body">
+        <tr><td colspan="5" class="empty">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  const API = "http://192.168.1.120:8002";
+  let chartInstance = null;
+
+  const COLORS = [
+    "#58a6ff","#3fb950","#d29922","#f78166","#bc8cff",
+    "#79c0ff","#56d364","#e3b341","#ffa198","#d2a8ff",
+  ];
+
+  const brl  = (v) => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:4});
+  const brl2 = (v) => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2});
+
+  async function loadSelects() {
+    const [vRes, cRes] = await Promise.all([
+      fetch(`${API}/veiculos`).then(r => r.json()),
+      fetch(`${API}/cargas`).then(r => r.json()),
+    ]);
+    const selV = document.getElementById("sel-veiculo");
+    selV.innerHTML = vRes.map(v => `<option value="${v.tipo_veiculo}">${v.tipo_veiculo} (${v.eixos} eixos)</option>`).join("");
+    const selC = document.getElementById("sel-carga");
+    selC.innerHTML = cRes.map(c => `<option value="${c.tipo_carga}">${c.tipo_carga}</option>`).join("");
+  }
+
+  async function loadHistorico() {
+    const veiculo = document.getElementById("sel-veiculo").value;
+    const carga   = document.getElementById("sel-carga").value;
+
+    const params = new URLSearchParams({ tipo_veiculo: veiculo, tipo_carga: carga });
+    try {
+      const resp = await fetch(`${API}/historico?${params}`);
+      if (!resp.ok) throw new Error((await resp.json()).detail);
+      const data = await resp.json();
+      renderChart(data, veiculo, carga);
+      renderTable(data);
+    } catch(e) {
+      document.getElementById("chart-title").textContent = "Erro: " + e.message;
+    }
+  }
+
+  function renderChart(data, veiculo, carga) {
+    document.getElementById("chart-title").textContent =
+      `Evolução do R$/km — ${veiculo} / ${carga}`;
+
+    const labels = data.map(d => d.data_vigencia);
+    const values = data.map(d => parseFloat(d.valor_km));
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "R$/km",
+          data: values,
+          borderColor: COLORS[0],
+          backgroundColor: COLORS[0] + "22",
+          pointBackgroundColor: COLORS[0],
+          pointRadius: 5,
+          tension: 0.3,
+          fill: true,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#c9d1d9" } },
+          tooltip: {
+            callbacks: {
+              label: ctx => " R$ " + ctx.parsed.y.toFixed(4) + "/km",
+            },
+          },
+        },
+        scales: {
+          x: { ticks: { color: "#8b949e" }, grid: { color: "#21262d" } },
+          y: {
+            ticks: {
+              color: "#8b949e",
+              callback: v => "R$ " + v.toFixed(4),
+            },
+            grid: { color: "#21262d" },
+          },
+        },
+      },
+    });
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById("hist-body");
+    if (!data.length) {
+      tbody.innerHTML = "<tr><td colspan='5' class='empty'>Sem dados.</td></tr>";
+      return;
+    }
+
+    tbody.innerHTML = data.map((row, i) => {
+      const prev = data[i - 1];
+      let varClass = "same", varText = "—";
+      if (prev) {
+        const diff = ((row.valor_km - prev.valor_km) / prev.valor_km * 100).toFixed(2);
+        varClass = diff > 0 ? "up" : diff < 0 ? "down" : "same";
+        varText  = (diff > 0 ? "▲ +" : diff < 0 ? "▼ " : "= ") + Math.abs(diff) + "%";
+      }
+      return `<tr>
+        <td>${row.data_vigencia}</td>
+        <td>${brl(row.valor_km)}</td>
+        <td class="${varClass}">${varText}</td>
+        <td>${row.valor_minimo ? brl2(row.valor_minimo) : "—"}</td>
+        <td style="font-size:0.75rem;color:var(--muted)">${row.fonte || "—"}</td>
+      </tr>`;
+    }).reverse().join("");
+  }
+
+  loadSelects();
+</script>
+</body>
+</html>
