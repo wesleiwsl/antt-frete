@@ -8,7 +8,7 @@
     :root {
       --bg: #0d1117; --surface: #161b22; --border: #30363d;
       --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
-      --green: #3fb950; --yellow: #d29922;
+      --green: #3fb950; --yellow: #d29922; --red: #f85149;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -23,64 +23,97 @@
     nav a { color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 6px; }
     nav a:hover, nav a.active { background: var(--accent); color: #fff; }
 
-    main {
-      max-width: 800px; margin: 2rem auto; padding: 0 1.5rem;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-    }
-    @media (max-width: 640px) { main { grid-template-columns: 1fr; } }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
 
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 1.5rem;
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+    .card h2 { font-size: 0.95rem; margin-bottom: 1.25rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+    /* Tabela selector */
+    .tabela-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .tabela-btn {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.5rem;
+      cursor: pointer; background: var(--bg); text-align: center; transition: all .15s;
     }
-    .card h2 { font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); }
-    .card.full { grid-column: 1 / -1; }
+    .tabela-btn:hover { border-color: var(--accent); }
+    .tabela-btn.active { border-color: var(--accent); background: rgba(88,166,255,0.1); }
+    .tabela-btn .tab-id { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+    .tabela-btn .tab-name { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* Vehicle image box */
+    .vehicle-box {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem; margin-bottom: 1.25rem; text-align: center; min-height: 120px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .vehicle-box svg { max-width: 100%; height: 80px; }
+    .vehicle-box .vname { font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; color: var(--text); }
+    .vehicle-box .veixos { font-size: 0.75rem; color: var(--muted); }
 
     .form-group { margin-bottom: 1rem; }
-    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 4px; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
     select, input[type="number"] {
       width: 100%; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); padding: 0.5rem 0.75rem;
-      font-size: 0.9rem;
+      border-radius: 6px; color: var(--text); padding: 0.5rem 0.75rem; font-size: 0.88rem;
     }
     select:focus, input:focus { outline: none; border-color: var(--accent); }
 
-    button {
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .toggle-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); cursor: pointer; margin-bottom: 1rem; }
+    .toggle-label input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    button.calc-btn {
       width: 100%; background: var(--accent); border: none; border-radius: 6px;
-      color: #fff; padding: 0.65rem; font-size: 0.95rem; font-weight: 600;
-      cursor: pointer; margin-top: 0.5rem; transition: opacity .15s;
+      color: #fff; padding: 0.7rem; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity .15s;
     }
-    button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.calc-btn:hover { opacity: 0.85; }
+    button.calc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    /* Result panel */
+    .result-panel { display: none; }
 
-    .result-item { background: var(--bg); border-radius: 8px; padding: 1rem; }
-    .result-item .label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
-    .result-item .value { font-size: 1.2rem; font-weight: 700; color: var(--text); }
-    .result-item.highlight .value { color: var(--green); font-size: 1.6rem; }
-    .result-item.full-w { grid-column: 1 / -1; }
-
-    .breakdown {
-      margin-top: 1rem; background: var(--bg); border-radius: 8px;
-      padding: 1rem; font-size: 0.85rem;
+    .total-box {
+      background: linear-gradient(135deg, #0d2137, #0d1117);
+      border: 1px solid var(--accent); border-radius: 10px;
+      padding: 1.5rem; text-align: center; margin-bottom: 1rem;
     }
-    .breakdown h3 { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
-    .breakdown-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
-    .breakdown-row:last-child { border: none; font-weight: 700; color: var(--green); }
+    .total-box .label { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    .total-box .value { font-size: 2.2rem; font-weight: 800; color: var(--green); }
+    .total-box .sub { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 
-    .alert { padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; }
-    .alert-warn { background: rgba(210,153,34,0.15); border: 1px solid var(--yellow); color: var(--yellow); }
-    .alert-err  { background: rgba(248,81,73,0.15); border: 1px solid #f85149; color: #f85149; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .metric { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; }
+    .metric .mlabel { font-size: 0.72rem; color: var(--muted); margin-bottom: 3px; }
+    .metric .mvalue { font-size: 1rem; font-weight: 700; }
 
-    #resultado { display: none; }
+    .breakdown { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .breakdown h3 { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: .05em; }
+    .brow { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .brow:last-child { border: none; font-weight: 700; color: var(--green); padding-top: 8px; }
+    .brow .blab { color: var(--muted); }
+
+    .alert-warn {
+      background: rgba(210,153,34,0.12); border: 1px solid var(--yellow);
+      border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem;
+      color: var(--yellow); margin-top: 1rem;
+    }
+
+    .fonte-tag { font-size: 0.72rem; color: var(--muted); margin-top: 0.75rem; text-align: center; }
+
+    .placeholder-panel {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 300px; color: var(--muted); font-size: 0.9rem; gap: 1rem;
+    }
+    .placeholder-panel svg { opacity: 0.3; }
   </style>
 </head>
 <body>
 <header>
   <div>
     <h1>🧮 Calculadora de Frete ANTT</h1>
-    <p>Cálculo baseado no piso mínimo vigente — Lei 13.703/2018</p>
+    <p>Fórmula oficial: (distância × CCD) + CC + pedágio — PORT.SUROC Nº04/2026</p>
   </div>
   <nav>
     <a href="index.html">Tabela</a>
@@ -90,149 +123,392 @@
 </header>
 
 <main>
+  <!-- COLUNA ESQUERDA: FORMULÁRIO -->
   <div class="card">
     <h2>Parâmetros do Frete</h2>
 
+    <!-- Seletor de Tabela -->
+    <label style="margin-bottom:6px;display:block">Tabela ANTT</label>
+    <div class="tabela-grid" id="tabela-grid">
+      <div class="tabela-btn active" data-tab="A" onclick="selectTab(this)">
+        <div class="tab-id">A</div>
+        <div class="tab-name">Veículo completo</div>
+      </div>
+      <div class="tabela-btn" data-tab="B" onclick="selectTab(this)">
+        <div class="tab-id">B</div>
+        <div class="tab-name">Somente trator</div>
+      </div>
+      <div class="tabela-btn" data-tab="C" onclick="selectTab(this)">
+        <div class="tab-id">C</div>
+        <div class="tab-name">Alto desempenho (veículo completo)</div>
+      </div>
+      <div class="tabela-btn" data-tab="D" onclick="selectTab(this)">
+        <div class="tab-id">D</div>
+        <div class="tab-name">Alto desempenho (somente trator)</div>
+      </div>
+    </div>
+
+    <!-- Imagem do veículo -->
+    <div class="vehicle-box" id="vehicle-box">
+      <div id="vehicle-svg"></div>
+      <div class="vname" id="vehicle-name">Selecione os eixos</div>
+      <div class="veixos" id="vehicle-eixos"></div>
+    </div>
+
+    <!-- Eixos -->
     <div class="form-group">
-      <label>Tipo de Veículo</label>
-      <select id="sel-veiculo">
-        <option value="">Carregando…</option>
+      <label>Número de Eixos</label>
+      <select id="sel-eixos" onchange="onEixosChange()">
+        <option value="2">2 eixos</option>
+        <option value="3">3 eixos</option>
+        <option value="4">4 eixos</option>
+        <option value="5">5 eixos — Truck + Reboque</option>
+        <option value="6">6 eixos — Bitruck</option>
+        <option value="7">7 eixos — Bitrem</option>
+        <option value="9">9 eixos — Rodotrem</option>
       </select>
     </div>
 
+    <!-- Tipo de Carga -->
     <div class="form-group">
       <label>Tipo de Carga</label>
       <select id="sel-carga">
-        <option value="">Carregando…</option>
+        <option value="Carga Geral">Carga Geral</option>
+        <option value="Granel Sólido">Granel Sólido</option>
+        <option value="Granel Líquido">Granel Líquido</option>
+        <option value="Frigorificado">Frigorificado / Aquecido</option>
+        <option value="Neogranel">Neogranel</option>
+        <option value="Conteinerizado">Conteinerizado</option>
+        <option value="Granel Pressurizado">Granel Pressurizado</option>
+        <option value="Perigosa Sólida">Perigosa Sólida</option>
+        <option value="Perigosa Líquida">Perigosa Líquida</option>
+        <option value="Perigosa Frigorificada">Perigosa Frigorificada</option>
+        <option value="Perigosa Conteinerizada">Perigosa Conteinerizada</option>
+        <option value="Perigosa Geral">Perigosa Geral</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label>Distância (km)</label>
-      <input type="number" id="inp-km" min="1" step="1" placeholder="Ex: 500" />
+    <div class="row2">
+      <div class="form-group">
+        <label>Distância (km)</label>
+        <input type="number" id="inp-km" min="1" step="1" placeholder="Ex: 500" />
+      </div>
+      <div class="form-group">
+        <label>Pedágio (R$)</label>
+        <input type="number" id="inp-pedagio" min="0" step="0.01" placeholder="0,00" value="0" />
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Pedágio (R$)</label>
-      <input type="number" id="inp-pedagio" min="0" step="0.01" placeholder="Ex: 120.50" value="0" />
-    </div>
+    <label class="toggle-label">
+      <input type="checkbox" id="chk-vazio" />
+      Incluir retorno vazio (0,92 × dist × CCD)
+    </label>
 
-    <button id="btn-calcular" onclick="calcular()">Calcular Frete Mínimo</button>
+    <button class="calc-btn" id="btn-calcular" onclick="calcular()">Calcular Frete Mínimo</button>
   </div>
 
-  <div class="card" id="resultado">
-    <h2>Resultado</h2>
-    <div class="result-grid">
-      <div class="result-item highlight full-w">
+  <!-- COLUNA DIREITA: RESULTADO -->
+  <div>
+    <div class="placeholder-panel" id="placeholder">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--accent)">
+        <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z"/>
+      </svg>
+      Preencha os parâmetros e clique em <b>Calcular</b>
+    </div>
+
+    <div class="result-panel" id="result-panel">
+      <div class="total-box">
         <div class="label">Frete Mínimo Total</div>
         <div class="value" id="res-total">—</div>
+        <div class="sub" id="res-sub">—</div>
       </div>
-      <div class="result-item">
-        <div class="label">Frete Base</div>
-        <div class="value" id="res-base">—</div>
-      </div>
-      <div class="result-item">
-        <div class="label">Pedágio</div>
-        <div class="value" id="res-pedagio">—</div>
-      </div>
-      <div class="result-item">
-        <div class="label">Valor por km</div>
-        <div class="value" id="res-km">—</div>
-      </div>
-      <div class="result-item">
-        <div class="label">Mínimo Garantido</div>
-        <div class="value" id="res-min">—</div>
-      </div>
-    </div>
 
-    <div class="breakdown">
-      <h3>Composição do Cálculo</h3>
-      <div class="breakdown-row"><span>R$/km × distância</span><span id="bk-fretekm">—</span></div>
-      <div class="breakdown-row"><span>Aplicado mínimo?</span><span id="bk-minimo">—</span></div>
-      <div class="breakdown-row"><span>+ Pedágio</span><span id="bk-pedagio">—</span></div>
-      <div class="breakdown-row"><span><b>= Total mínimo</b></span><span id="bk-total">—</span></div>
-    </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="mlabel">CCD (R$/km)</div>
+          <div class="mvalue" id="res-ccd">—</div>
+        </div>
+        <div class="metric">
+          <div class="mlabel">CC — Custo Fixo</div>
+          <div class="mvalue" id="res-cc">—</div>
+        </div>
+        <div class="metric">
+          <div class="mlabel">Frete de Ida</div>
+          <div class="mvalue" id="res-ida">—</div>
+        </div>
+        <div class="metric">
+          <div class="mlabel">Retorno Vazio</div>
+          <div class="mvalue" id="res-vazio">—</div>
+        </div>
+        <div class="metric">
+          <div class="mlabel">Pedágio</div>
+          <div class="mvalue" id="res-pedagio">—</div>
+        </div>
+        <div class="metric">
+          <div class="mlabel">Tabela Aplicada</div>
+          <div class="mvalue" id="res-tabela">—</div>
+        </div>
+      </div>
 
-    <p style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem" id="res-vigencia"></p>
-  </div>
+      <div class="breakdown">
+        <h3>Composição detalhada</h3>
+        <div class="brow"><span class="blab">Distância × CCD</span><span id="bk-desl">—</span></div>
+        <div class="brow"><span class="blab">+ CC (carga/descarga fixo)</span><span id="bk-cc">—</span></div>
+        <div class="brow"><span class="blab">= Frete de ida</span><span id="bk-ida">—</span></div>
+        <div class="brow" id="brow-vazio" style="display:none"><span class="blab">+ Retorno vazio</span><span id="bk-vazio">—</span></div>
+        <div class="brow"><span class="blab">+ Pedágio</span><span id="bk-pedagio">—</span></div>
+        <div class="brow"><span><b>= Total mínimo ANTT</b></span><span id="bk-total">—</span></div>
+      </div>
 
-  <div class="card full" id="card-alerta" style="display:none">
-    <div class="alert alert-warn">
-      ⚠️ <strong>Atenção:</strong> O piso mínimo é obrigatório por lei. Cobrar abaixo deste valor
-      pode resultar em penalidades para o contratante e é considerado infração.
+      <div class="alert-warn">
+        ⚠️ <strong>Atenção legal:</strong> Cobrar abaixo do piso mínimo é infração sujeita a multa conforme Lei 13.703/2018. O valor calculado é o <strong>mínimo obrigatório</strong>.
+      </div>
+
+      <p class="fonte-tag" id="res-fonte"></p>
     </div>
   </div>
 </main>
 
 <script>
-  const API = "http://192.168.1.120:8002";
-  const brl = (v) => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+  const API = "http://192.168.1.120:8005";
+  const brl = v => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+  const brl4 = v => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:4, maximumFractionDigits:4});
 
-  async function loadSelects() {
-    const [vRes, cRes] = await Promise.all([
-      fetch(`${API}/veiculos`).then(r => r.json()),
-      fetch(`${API}/cargas`).then(r => r.json()),
-    ]);
+  // Nome do veículo por tabela e eixos
+  const NOMES_VEICULO = {
+    "A": {2:"Toco", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco + SR)", 6:"Carreta (Truck + SR)", 7:"Bitrem", 9:"Rodotrem"},
+    "B": {2:"Simples", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco)", 6:"Carreta (Truck)", 7:"Bitrem", 9:"Rodotrem"},
+    "C": {2:"Toco", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco + SR)", 6:"Carreta (Truck + SR)", 7:"Bitrem", 9:"Rodotrem"},
+    "D": {2:"Simples", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco)", 6:"Carreta (Truck)", 7:"Bitrem", 9:"Rodotrem"},
+  };
 
-    const selV = document.getElementById("sel-veiculo");
-    selV.innerHTML = vRes.map(v =>
-      `<option value="${v.tipo_veiculo}">${v.tipo_veiculo} (${v.eixos} eixos)</option>`
-    ).join("");
+  // SVGs dos veículos (silhuetas laterais em SVG inline)
+  const VEHICLE_SVGS = {
+    2: { svg: `
+      <svg viewBox="0 0 220 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- cabine -->
+        <rect x="10" y="20" width="55" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="18" y="26" width="22" height="16" rx="2" fill="#58a6ff" opacity=".7"/>
+        <!-- baú -->
+        <rect x="65" y="18" width="115" height="37" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <!-- chassis -->
+        <rect x="10" y="54" width="170" height="6" rx="2" fill="#30363d"/>
+        <!-- rodas -->
+        <circle cx="45" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="45" cy="63" r="4" fill="#30363d"/>
+        <circle cx="150" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="150" cy="63" r="4" fill="#30363d"/>
+      </svg>` },
+    3: { svg: `
+      <svg viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="55" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="18" y="26" width="22" height="16" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="65" y="18" width="135" height="37" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="10" y="54" width="190" height="6" rx="2" fill="#30363d"/>
+        <circle cx="45" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="45" cy="63" r="4" fill="#30363d"/>
+        <circle cx="158" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="158" cy="63" r="4" fill="#30363d"/>
+        <circle cx="178" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="178" cy="63" r="4" fill="#30363d"/>
+      </svg>` },
+    4: { svg: `
+      <svg viewBox="0 0 260 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="55" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="18" y="26" width="22" height="16" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="65" y="18" width="155" height="37" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="10" y="54" width="210" height="6" rx="2" fill="#30363d"/>
+        <circle cx="38" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="38" cy="63" r="4" fill="#30363d"/>
+        <circle cx="58" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="58" cy="63" r="4" fill="#30363d"/>
+        <circle cx="170" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="170" cy="63" r="4" fill="#30363d"/>
+        <circle cx="190" cy="63" r="10" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="190" cy="63" r="4" fill="#30363d"/>
+      </svg>` },
+    5: { svg: `
+      <svg viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="50" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="16" y="26" width="20" height="14" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="60" y="22" width="90" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <!-- engate -->
+        <rect x="150" y="35" width="10" height="6" rx="1" fill="#8b949e"/>
+        <rect x="160" y="26" width="110" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="10" y="54" width="260" height="6" rx="2" fill="#30363d"/>
+        <circle cx="38" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="38" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="118" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="118" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="138" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="138" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="235" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="235" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="255" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="255" cy="63" r="3.5" fill="#30363d"/>
+      </svg>` },
+    6: { svg: `
+      <svg viewBox="0 0 340 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="50" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="16" y="26" width="20" height="14" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="60" y="22" width="95" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="155" y="35" width="10" height="6" rx="1" fill="#8b949e"/>
+        <rect x="165" y="22" width="130" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="10" y="54" width="285" height="6" rx="2" fill="#30363d"/>
+        <circle cx="30" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="30" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="50" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="50" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="118" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="118" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="138" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="138" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="245" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="245" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="265" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="265" cy="63" r="3.5" fill="#30363d"/>
+      </svg>` },
+    7: { svg: `
+      <svg viewBox="0 0 360 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="20" width="48" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="14" y="26" width="18" height="14" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="56" y="22" width="100" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="156" y="35" width="10" height="6" rx="1" fill="#8b949e"/>
+        <rect x="166" y="22" width="150" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="8" y="54" width="308" height="6" rx="2" fill="#30363d"/>
+        <circle cx="28" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="28" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="48" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="48" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="115" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="115" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="135" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="135" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="222" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="222" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="242" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="242" cy="63" r="3.5" fill="#30363d"/>
+        <circle cx="295" cy="63" r="9" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="295" cy="63" r="3.5" fill="#30363d"/>
+      </svg>` },
+    9: { svg: `
+      <svg viewBox="0 0 420 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="20" width="45" height="35" rx="4" fill="#1f6feb" opacity=".9"/>
+        <rect x="12" y="26" width="16" height="14" rx="2" fill="#58a6ff" opacity=".7"/>
+        <rect x="51" y="22" width="95" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="146" y="35" width="8" height="6" rx="1" fill="#8b949e"/>
+        <rect x="154" y="22" width="120" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="274" y="35" width="8" height="6" rx="1" fill="#8b949e"/>
+        <rect x="282" y="22" width="110" height="33" rx="3" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <rect x="6" y="54" width="386" height="6" rx="2" fill="#30363d"/>
+        <!-- eixo 1-2 -->
+        <circle cx="25" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="25" cy="63" r="3" fill="#30363d"/>
+        <circle cx="43" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="43" cy="63" r="3" fill="#30363d"/>
+        <!-- eixo 3-4 -->
+        <circle cx="105" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="105" cy="63" r="3" fill="#30363d"/>
+        <circle cx="123" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="123" cy="63" r="3" fill="#30363d"/>
+        <!-- eixo 5-6 -->
+        <circle cx="200" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="200" cy="63" r="3" fill="#30363d"/>
+        <circle cx="218" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="218" cy="63" r="3" fill="#30363d"/>
+        <!-- eixo 7 -->
+        <circle cx="248" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="248" cy="63" r="3" fill="#30363d"/>
+        <!-- eixo 8-9 -->
+        <circle cx="340" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="340" cy="63" r="3" fill="#30363d"/>
+        <circle cx="358" cy="63" r="8" fill="#21262d" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="358" cy="63" r="3" fill="#30363d"/>
+      </svg>` },
+  };
 
-    const selC = document.getElementById("sel-carga");
-    selC.innerHTML = cRes.map(c =>
-      `<option value="${c.tipo_carga}">${c.tipo_carga}</option>`
-    ).join("");
+  let selectedTab = "A";
+
+  function selectTab(el) {
+    document.querySelectorAll(".tabela-btn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    selectedTab = el.dataset.tab;
+    onEixosChange();
+  }
+
+  function onEixosChange() {
+    const eixos = parseInt(document.getElementById("sel-eixos").value);
+    const v = VEHICLE_SVGS[eixos];
+    if (v) {
+      document.getElementById("vehicle-svg").innerHTML = v.svg;
+      document.getElementById("vehicle-name").textContent =
+        NOMES_VEICULO[selectedTab]?.[eixos] || `${eixos} eixos`;
+      document.getElementById("vehicle-eixos").textContent = `${eixos} eixos`;
+    }
   }
 
   async function calcular() {
-    const veiculo = document.getElementById("sel-veiculo").value;
+    const eixos   = document.getElementById("sel-eixos").value;
     const carga   = document.getElementById("sel-carga").value;
     const km      = parseFloat(document.getElementById("inp-km").value);
     const pedagio = parseFloat(document.getElementById("inp-pedagio").value) || 0;
+    const vazio   = document.getElementById("chk-vazio").checked;
 
-    if (!veiculo || !carga || !km || km <= 0) {
-      alert("Preencha todos os campos obrigatórios.");
+    if (!eixos || !carga || !km || km <= 0) {
+      alert("Preencha distância antes de calcular.");
       return;
     }
 
     const btn = document.getElementById("btn-calcular");
-    btn.disabled = true;
-    btn.textContent = "Calculando…";
+    btn.disabled = true; btn.textContent = "Calculando…";
 
     try {
       const params = new URLSearchParams({
-        tipo_veiculo: veiculo, tipo_carga: carga,
-        distancia_km: km, pedagio,
+        eixos, tipo_carga: carga, tabela: selectedTab,
+        distancia_km: km, pedagio, retorno_vazio: vazio,
       });
       const resp = await fetch(`${API}/calcular?${params}`);
-      if (!resp.ok) throw new Error((await resp.json()).detail);
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.detail);
+      }
       const d = await resp.json();
 
       document.getElementById("res-total").textContent   = brl(d.frete_total);
-      document.getElementById("res-base").textContent    = brl(d.frete_base);
+      document.getElementById("res-sub").textContent     = `${d.tipo_veiculo} · ${d.tipo_carga} · Tabela ${d.tabela} · ${km} km`;
+      document.getElementById("res-ccd").textContent     = brl4(d.ccd) + "/km";
+      document.getElementById("res-cc").textContent      = brl(d.cc);
+      document.getElementById("res-ida").textContent     = brl(d.frete_ida);
+      document.getElementById("res-vazio").textContent   = d.retorno_vazio ? brl(d.frete_vazio) : "—";
       document.getElementById("res-pedagio").textContent = brl(d.pedagio);
-      document.getElementById("res-km").textContent      = "R$ " + Number(d.valor_km).toFixed(4) + "/km";
-      document.getElementById("res-min").textContent     = brl(d.valor_minimo);
+      document.getElementById("res-tabela").textContent  = `Tabela ${d.tabela}`;
 
-      const minimoAplicado = d.frete_por_km < d.valor_minimo;
-      document.getElementById("bk-fretekm").textContent  = brl(d.frete_por_km);
-      document.getElementById("bk-minimo").textContent   = minimoAplicado ? "✅ Sim (mínimo garantido)" : "Não";
-      document.getElementById("bk-pedagio").textContent  = brl(d.pedagio);
-      document.getElementById("bk-total").textContent    = brl(d.frete_total);
-      document.getElementById("res-vigencia").textContent = `Tabela vigente desde: ${d.vigente_desde}`;
+      document.getElementById("bk-desl").textContent    = brl(d.frete_deslocamento);
+      document.getElementById("bk-cc").textContent      = brl(d.cc);
+      document.getElementById("bk-ida").textContent     = brl(d.frete_ida);
+      document.getElementById("bk-pedagio").textContent = brl(d.pedagio);
+      document.getElementById("bk-total").textContent   = brl(d.frete_total);
 
-      document.getElementById("resultado").style.display    = "block";
-      document.getElementById("card-alerta").style.display  = "block";
+      const rowVazio = document.getElementById("brow-vazio");
+      if (d.retorno_vazio) {
+        document.getElementById("bk-vazio").textContent = brl(d.frete_vazio);
+        rowVazio.style.display = "flex";
+      } else {
+        rowVazio.style.display = "none";
+      }
+
+      document.getElementById("res-fonte").textContent = d.fonte;
+      document.getElementById("placeholder").style.display    = "none";
+      document.getElementById("result-panel").style.display   = "block";
     } catch(e) {
       alert("Erro: " + e.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = "Calcular Frete Mínimo";
+      btn.disabled = false; btn.textContent = "Calcular Frete Mínimo";
     }
   }
 
-  loadSelects();
+  // Inicializa imagem do veículo
+  onEixosChange();
 </script>
 </body>
 </html>

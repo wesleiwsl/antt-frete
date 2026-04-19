@@ -74,47 +74,85 @@
 
 <main>
   <div class="card">
-    <h2>Filtrar por tipo de carga</h2>
+    <!-- Filtro Tabela A/B/C/D -->
+    <h2>Tabela ANTT</h2>
+    <div class="badges" id="badges-tabela">
+      <span class="badge active" data-tabela="">Todas</span>
+      <span class="badge" data-tabela="A">A — Veículo completo</span>
+      <span class="badge" data-tabela="B">B — Somente trator</span>
+      <span class="badge" data-tabela="C">C — Alto desempenho (completo)</span>
+      <span class="badge" data-tabela="D">D — Alto desempenho (trator)</span>
+    </div>
+
+    <!-- Filtro Eixos -->
+    <h2 style="margin-top:1rem">Número de Eixos</h2>
+    <div class="badges" id="badges-eixos">
+      <span class="badge active" data-eixos="">Todos</span>
+      <span class="badge" data-eixos="2">2 eixos</span>
+      <span class="badge" data-eixos="3">3 eixos</span>
+      <span class="badge" data-eixos="4">4 eixos</span>
+      <span class="badge" data-eixos="5">5 eixos</span>
+      <span class="badge" data-eixos="6">6 eixos</span>
+      <span class="badge" data-eixos="7">7 eixos</span>
+      <span class="badge" data-eixos="9">9 eixos</span>
+    </div>
+
+    <!-- Filtro Carga -->
+    <h2 style="margin-top:1rem">Tipo de Carga</h2>
     <div class="badges" id="badges-carga">
       <span class="badge active" data-carga="">Todas</span>
     </div>
+
     <table>
       <thead>
         <tr>
+          <th>Tab.</th>
           <th>Veículo</th>
           <th>Eixos</th>
           <th>Tipo de Carga</th>
-          <th>R$/km</th>
-          <th>Mínimo (R$)</th>
+          <th>CCD (R$/km)</th>
+          <th>CC Fixo (R$)</th>
           <th>Vigência</th>
         </tr>
       </thead>
       <tbody id="tabela-body">
-        <tr><td colspan="6" class="loader" style="padding:1rem">Carregando…</td></tr>
+        <tr><td colspan="7" class="loader" style="padding:1rem">Carregando…</td></tr>
       </tbody>
     </table>
     <p class="vigencia" id="vigencia-text"></p>
-    <p id="status"></p>
   </div>
 </main>
 
 <script>
-  const API = "http://192.168.1.120:8002";
+  const API = "http://192.168.1.120:8005";
   let allRows = [];
+  let activeTabela = "";
+  let activeEixos  = "";
+  let activeCarga  = "";
 
-  const fmt  = (v) => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:4}) : "—";
-  const fmtD = (v) => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2}) : "—";
+  const fmt  = v => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:4, maximumFractionDigits:4}) : "—";
+  const fmtD = v => v != null ? "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits:2}) : "—";
 
-  async function loadTabela(carga = "") {
+  // Nome do veículo por eixos e tabela
+  const NOMES = {
+    "A": {2:"Toco", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco+SR)", 6:"Carreta (Truck+SR)", 7:"Bitrem", 9:"Rodotrem"},
+    "B": {2:"Simples", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco)", 6:"Carreta (Truck)", 7:"Bitrem", 9:"Rodotrem"},
+    "C": {2:"Toco", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco+SR)", 6:"Carreta (Truck+SR)", 7:"Bitrem", 9:"Rodotrem"},
+    "D": {2:"Simples", 3:"Truck", 4:"Bitruck", 5:"Carreta (Toco)", 6:"Carreta (Truck)", 7:"Bitrem", 9:"Rodotrem"},
+  };
+  const nomVeiculo = (tab, eixos) => (NOMES[tab] || {})[eixos] || `${eixos} eixos`;
+
+  async function loadTabela() {
     const params = new URLSearchParams();
-    if (carga) params.set("tipo_carga", carga);
+    if (activeTabela) params.set("tabela", activeTabela);
+    if (activeCarga)  params.set("tipo_carga", activeCarga);
     try {
       const resp = await fetch(`${API}/tabela?${params}`);
       allRows = await resp.json();
-      renderTabela(allRows);
+      renderTabela();
     } catch(e) {
       document.getElementById("tabela-body").innerHTML =
-        `<tr><td colspan="6" style="color:#f85149;padding:1rem">Erro ao conectar à API: ${e.message}</td></tr>`;
+        `<tr><td colspan="7" style="color:#f85149;padding:1rem">Erro: ${e.message}</td></tr>`;
     }
   }
 
@@ -127,36 +165,54 @@
       b.className = "badge";
       b.dataset.carga = c.tipo_carga;
       b.textContent = c.tipo_carga;
-      b.onclick = () => selectCarga(b);
+      b.onclick = () => { activeCarga = c.tipo_carga; selectGroup("badges-carga", b); loadTabela(); };
       cont.appendChild(b);
     });
   }
 
-  function selectCarga(el) {
-    document.querySelectorAll(".badge").forEach(b => b.classList.remove("active"));
+  function selectGroup(groupId, el) {
+    document.querySelectorAll(`#${groupId} .badge`).forEach(b => b.classList.remove("active"));
     el.classList.add("active");
-    loadTabela(el.dataset.carga);
   }
 
-  document.querySelector(".badge").onclick = (e) => selectCarga(e.target);
+  // Tabela badges
+  document.querySelectorAll("#badges-tabela .badge").forEach(b => {
+    b.onclick = () => { activeTabela = b.dataset.tabela; selectGroup("badges-tabela", b); loadTabela(); };
+  });
+  // Eixos badges (filtra client-side)
+  document.querySelectorAll("#badges-eixos .badge").forEach(b => {
+    b.onclick = () => { activeEixos = b.dataset.eixos; selectGroup("badges-eixos", b); renderTabela(); };
+  });
+  // Carga "Todas"
+  document.querySelector("#badges-carga .badge").onclick = () => {
+    activeCarga = ""; selectGroup("badges-carga", document.querySelector("#badges-carga .badge")); loadTabela();
+  };
 
-  function renderTabela(rows) {
+  const TAB_COLORS = { A:"#58a6ff", B:"#3fb950", C:"#d29922", D:"#bc8cff" };
+
+  function renderTabela() {
     const tbody = document.getElementById("tabela-body");
-    if (!rows.length) { tbody.innerHTML = "<tr><td colspan='6'>Nenhum resultado.</td></tr>"; return; }
+    let rows = allRows;
+    if (activeEixos) rows = rows.filter(r => String(r.eixos) === activeEixos);
+    if (!rows.length) { tbody.innerHTML = "<tr><td colspan='7' style='padding:1rem;color:var(--muted)'>Nenhum resultado.</td></tr>"; return; }
 
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td>${r.tipo_veiculo}</td>
-        <td><span class="tag-eixo">${r.eixos} eixos</span></td>
+    tbody.innerHTML = rows.map(r => {
+      const tab = r.tabela || "—";
+      const cor = TAB_COLORS[tab] || "var(--muted)";
+      return `<tr>
+        <td><span style="background:${cor}22;color:${cor};border-radius:4px;padding:1px 7px;font-weight:700;font-size:.8rem">${tab}</span></td>
+        <td>${nomVeiculo(tab, r.eixos)}</td>
+        <td><span class="tag-eixo">${r.eixos}e</span></td>
         <td>${r.tipo_carga}</td>
         <td>${fmt(r.valor_km)}</td>
-        <td>${fmtD(r.valor_minimo)}</td>
+        <td>${fmtD(r.valor_cc || r.valor_minimo)}</td>
         <td>${r.vigente_desde}</td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
 
     const datas = [...new Set(rows.map(r => r.vigente_desde))];
     document.getElementById("vigencia-text").textContent =
-      `Vigência: ${datas.join(", ")} — Fonte: ANTT / gov.br`;
+      `${rows.length} registros — Vigência: ${datas.join(", ")} — Fonte: PORT.SUROC Nº04/2026`;
   }
 
   loadCargas();
